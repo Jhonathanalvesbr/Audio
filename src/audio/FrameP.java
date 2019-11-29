@@ -29,10 +29,11 @@ public class FrameP extends javax.swing.JFrame {
     JPopupMenu m = new JPopupMenu();
     File[] arquivos = new File[999];
     ArrayList<File> a = new ArrayList<>();
-    Tocar tocar = new Tocar();
+    Player player = new Player();
+    Player tocar2 = new Player();
     boolean pause;
-    Duration duration;
     int valor;
+    Duration duration;
     Duration currentTime;
     boolean arrastar;
     boolean click;
@@ -225,7 +226,7 @@ public class FrameP extends javax.swing.JFrame {
 
         jTable7.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-
+                {null}
             },
             new String [] {
                 ""
@@ -237,6 +238,16 @@ public class FrameP extends javax.swing.JFrame {
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
+            }
+        });
+        jTable7.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable7MouseClicked(evt);
+            }
+        });
+        jTable7.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                jTable7KeyPressed(evt);
             }
         });
         jScrollPane7.setViewportView(jTable7);
@@ -447,45 +458,6 @@ public class FrameP extends javax.swing.JFrame {
         // TODO add your handling code here:
 
     }//GEN-LAST:event_jTable1MouseReleased
-    private static String formatTime(Duration elapsed, Duration duration) {
-        int intElapsed = (int) Math.floor(elapsed.toSeconds());
-        int elapsedHours = intElapsed / (60 * 60);
-        if (elapsedHours > 0) {
-            intElapsed -= elapsedHours * 60 * 60;
-        }
-        int elapsedMinutes = intElapsed / 60;
-        int elapsedSeconds = intElapsed - elapsedHours * 60 * 60
-                - elapsedMinutes * 60;
-
-        if (duration.greaterThan(Duration.ZERO)) {
-            int intDuration = (int) Math.floor(duration.toSeconds());
-            int durationHours = intDuration / (60 * 60);
-            if (durationHours > 0) {
-                intDuration -= durationHours * 60 * 60;
-            }
-            int durationMinutes = intDuration / 60;
-            int durationSeconds = intDuration - durationHours * 60 * 60
-                    - durationMinutes * 60;
-            if (durationHours > 0) {
-                return String.format("%d:%02d:%02d/%d:%02d:%02d",
-                        elapsedHours, elapsedMinutes, elapsedSeconds,
-                        durationHours, durationMinutes, durationSeconds);
-            } else {
-                return String.format("%02d:%02d/%02d:%02d",
-                        elapsedMinutes, elapsedSeconds, durationMinutes,
-                        durationSeconds);
-            }
-        } else {
-            if (elapsedHours > 0) {
-                return String.format("%d:%02d:%02d", elapsedHours,
-                        elapsedMinutes, elapsedSeconds);
-            } else {
-                return String.format("%02d:%02d", elapsedMinutes,
-                        elapsedSeconds);
-            }
-        }
-    }
-
 
     private void jTable1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTable1KeyPressed
         // TODO add your handling code here:
@@ -493,13 +465,13 @@ public class FrameP extends javax.swing.JFrame {
         {
             int atualizacao = (int) (currentTime.divide(duration).toMillis() * 100);
             atualizacao -= 4;
-            Tocar.mediaPlayer.seek(duration.multiply((double) (atualizacao / 100.0)));
+            player.atulizarBarra(duration, atualizacao);
         }
         else if(evt.getKeyCode() == 39 && evt.isAltDown())
         {
             int atualizacao = (int) (currentTime.divide(duration).toMillis() * 100);
             atualizacao += 4;
-            Tocar.mediaPlayer.seek(duration.multiply((double) (atualizacao / 100.0)));
+            player.atulizarBarra(duration, atualizacao);
         }
         jTable1.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
 
@@ -508,10 +480,10 @@ public class FrameP extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent ae) {
                 int selecao = jTable1.getSelectedRow();
                 String arq = a.get(selecao).getPath();
-                Tocar.tocar(arq);
-                Tocar.mediaPlayer.currentTimeProperty().addListener((ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) -> {
-                    currentTime = Tocar.mediaPlayer.getCurrentTime();
-                    duration = Tocar.mediaPlayer.getTotalDuration();
+                player.tocarMusica(arq);
+                Player.mediaPlayer.currentTimeProperty().addListener((ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) -> {
+                    currentTime = Player.mediaPlayer.getCurrentTime();
+                    duration = Player.mediaPlayer.getTotalDuration();
                     jLabel1.setText(formatTime(currentTime, duration));
                     jSlider1.setValue((int) (currentTime.divide(duration).toMillis() * 100));
 
@@ -534,7 +506,7 @@ public class FrameP extends javax.swing.JFrame {
             JSlider sourceSlider =(JSlider)evt.getSource();
             BasicSliderUI ui = (BasicSliderUI)sourceSlider.getUI();
             int value = ui.valueForXPosition( evt.getX() );
-            Tocar.mediaPlayer.seek(duration.multiply((double) (value / 100.0)));
+            Player.mediaPlayer.seek(duration.multiply((double) (value / 100.0)));
             click = true;
     }//GEN-LAST:event_jSlider1MouseClicked
 
@@ -561,11 +533,10 @@ public class FrameP extends javax.swing.JFrame {
 
     private void jSlider1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jSlider1MouseReleased
 
-    if(arrastar == true && click == true)
+    if(arrastar == true)
     {
-        Tocar.mediaPlayer.seek(duration.multiply((double) (f / 100.0)));
+        Player.mediaPlayer.seek(duration.multiply((double) (f / 100.0)));
         arrastar = false;
-        System.out.println("2");
     }
         
 // TODO add your handling code here:
@@ -579,6 +550,45 @@ public class FrameP extends javax.swing.JFrame {
     private void formKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
         // TODO add your handling code here:
     }//GEN-LAST:event_formKeyPressed
+
+    private void jTable7KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTable7KeyPressed
+
+        jTable7.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
+        jTable7.getActionMap().put("Enter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                int selecao = jTable7.getSelectedRow();
+                String arq = a2.get(selecao).getPath();
+                tocar2.tocarMusica(arq);
+            }
+        });        // TODO add your handling code here:
+    }//GEN-LAST:event_jTable7KeyPressed
+
+    private void jTable7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable7MouseClicked
+        // TODO add your handling code here:
+        if (evt.getClickCount() == 2) {
+            Mouse mouse = new Mouse();
+            JFileChooser chooser = new JFileChooser();
+            mouse.botaoEsquerdo(evt, chooser);
+            arquivos = chooser.getSelectedFiles();
+
+            int selecao = jTable7.getRowCount() - 1;
+            DefaultTableModel model = (DefaultTableModel) jTable7.getModel();
+
+            for (File arquivo : arquivos) {
+                a2.add(arquivo);
+                model.setValueAt(arquivo.getName(), selecao++, 0);
+                Vector row = new Vector();
+                row.add("");
+                model.addRow(row);
+            }
+        }
+
+        if (evt.getButton() == 3) {
+            Mouse mouse = new Mouse();
+            mouse.botaoDireito(evt, jDesktopPane1, m);
+        }
+    }//GEN-LAST:event_jTable7MouseClicked
 
     /**
      * @param args the command line arguments
